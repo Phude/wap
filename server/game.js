@@ -1,36 +1,43 @@
 import Protocol from "protocol"
 
-class EntitySystem = {
-  constructor(name, value, hidden=false) {
-    this.name = name
-    this.value = value
-    this.hidden = hidden
+export default class EntitySystem = {
+  constructor() {
+    this.seed = seed
+    this.ents = {}
   }
 
-  static n(type, name) {
+  randomId() {
+    const m = 2147483648 // 2^31
+    const a = 1103515245 // glibc uses this number
+    const c = 12345      // glibc uses this number
 
+    this.seed = ((this.seed * a) % m) + c
+    return this.seed
+  }
+
+  addEntity(entity, type) {
+    var id = randomId()
+    this.ents[id] = entity
+  }
+
+  makePlayer() {
+    var player = {
+      display_name: "abc123",
+      gold: 0,
+      tier: 1,
+      tier_up_cost: 10,
+      shop_size: 10,
+      shop_slots: [],
+      party: [],
+      max_party_size: 5,
+      victory_points: 0,
+    }
+    addEntity(player, "player")
   }
 }
 
 // entity classes
 
-class Player {
-  display_name
-	gold = 0
-	tier = 1
-	tier_up_cost
-	shop_size = 4
-	shop_slots = []
-	party = []
-	max_party_size = 5
-	victory_points = 0
-
-	func _init(display_name):
-		self.display_name = display_name
-		self.tier_up_cost = 5
-		for i in range(shop_size):
-			shop_slots[i] = ShopSlot.new(null)
-}
 //
 // class Unit {
 // 	var proto
