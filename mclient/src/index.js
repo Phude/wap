@@ -1,29 +1,97 @@
 import m from "mithril";
 import ServerConnection from "./net.js"
-import Protocol, { NavigationRequest, ActionRequest, Message } from "protocol"
+import Protocol, { NavigationRequest, ActionRequest, Message, GameEvent } from "protocol"
+
+var state = {
+  latest_error: "",
+  room: undefined,
+  ents: undefined,
+}
 
 function onservermessage(msg) {
   if (msg.message_type == Message.ACTION_REPLY) {
     // handle action reply
   }
   else if (msg.message_type == Message.GAME_EVENT) {
-    // handle game event
+    if (msg.event === GameEvent.GAME_START) {
+      switchToGameView()
+    }
+    else if (msg.event === GameEvent.ENT_UPDATE) {
+      
+    }
   }
+  else if (msg.message_type == Message.NAVIGATION_REPLY) {
+    state.latest_error = Protocol.NavigationErrorString[msg.errorcode];
+    if (state.latest_error === undefined) {
+      state.latest_error = "unknown error";
+    }
+  }
+  else if (msg.message_type == Message.USER_ONBOARD) {
+    state.room = {}
+    state.room.room_id = msg.room_id
+    state.room.users = msg.users
+    switchToLobbyView()
+  }
+  m.redraw()
 }
 
 ServerConnection.init(onservermessage)
 
-function joinRoom(room_id=0) {
+function switchToLobbyView() {
+  m.mount(document.body, Lobby)
+}
+
+function switchToGameView() {
+  m.mount(document.body, Game)
+}
+
+function joinRoom() {
+  var room_id = document.getElementById("roomCode").value
   ServerConnection.send(NavigationRequest.make.JOIN_ROOM(room_id))
 }
 
-var Hello = {
-    view: function() {
-        return m("main", [
-            m("h1", {class: "title"}, "My first app > "),
-            m("button", {onclick: ()=>joinRoom(0)}, "Join Room")
-        ])
-    }
+function startGame() {
+  ServerConnection.send(NavigationRequest.make.START_GAME())
 }
 
-m.mount(document.body, Hello)
+var MainMenu = {
+  view: function() {
+    return m("main", [
+      m("h1", {class: "title"}, "Web AutoPets"),
+      m("form", {action: "#"}, [
+        m("label", state.latest_error),
+        m("input", {id: "roomCode", type: "text", placeholder: "Enter game ID"}),
+        m("button", {onclick: joinRoom}, "Join Game"),
+      ])
+    ])
+  }
+}
+
+var Lobby = {
+  view: function() {
+    return m("main", [
+      m("h1", "Room: " + state.room.room_id),
+      m("ol", LobbyUserList()),
+      m("button", {onclick: startGame}, "Start Game"),
+    ])
+  }
+}
+
+var Game = {
+  view: function() {
+    return m("main", [
+      m("div", "welcome to the game!"),
+      m("div", JSON.stringify(state.game.ents)),
+    ])
+  }
+}
+
+const LobbyUserList = function() {
+  var user_list = []
+  for (const user_id of state.room.users) {
+    user_list.push(m("li", user_id))
+  }
+  return user_list
+}
+
+m.mount(document.body, MainMenu)

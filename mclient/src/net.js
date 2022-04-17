@@ -12,7 +12,7 @@ function init(callback) {
     var msg = Message.deserialize(ev.data)
     if (msg === undefined)
       return
-    messageCallback(ev.data)
+    messageCallback(msg)
   };
 
   ws.onopen = function open() {

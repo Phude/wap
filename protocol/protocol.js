@@ -5,6 +5,7 @@ export class Message {
   static ACTION_REPLY = "action_reply"
   static NAVIGATION_REPLY = "navigation_reply"
   static NAVIGATION_REQUEST = "navigation_request"
+  static USER_ONBOARD = "user_onboard"
 
   constructor(messageType) {
     this.message_type = messageType
@@ -22,8 +23,19 @@ export class Message {
     catch(e) {
       return undefined
     }
-    return JSON.parse(serializedMessage);
+    return obj;
 
+  }
+}
+
+class UserOnboard extends Message {
+  constructor(room_id, users, game_params, phase, ents="TODO") {
+    super(Message.USER_ONBOARD)
+    this.room_id = room_id
+    this.users = users
+    this.game_params = game_params
+    this.phase = phase
+    this.ents = ents
   }
 }
 
@@ -31,18 +43,29 @@ class GameStateUpdate extends Message {
 
 }
 
-class GameEvent extends Message {
-  static PHASE_CHANGED = new GameEvent("phase_changed") // lobby, buyphase, battle, gameover
-  static STATE_UPDATE = new GameEvent("state_update")
+export class GameEvent extends Message {
+  static GAME_START = "game_start"
+  static PHASE_CHANGE = "phase_change" // lobby, buyphase, battle, gameover
+  static ENT_UPDATE = "ent_update"
+
+  static make = {
+    GAME_START: ()=>
+      new GameEvent(GameEvent.GAME_START),
+  }
+  constructor(event, detail=[]) {
+    super(Message.GAME_EVENT);
+    this.event = event;
+    this.detail = detail;
+  }
 }
 
 export class ActionRequest extends Message {
   static PURCHASE_UNIT = "purchase_unit"
-  static PURCHASE_ITEM
-  static LEVEL_UP
-  static REPOSITION_UNIT
-  static FREEZE_SHOP_UNIT
-  static FREEZE_SHOP_ITEM
+  static PURCHASE_ITEM = "purchase_item"
+  static LEVEL_UP = "level_up"
+  static REPOSITION_UNIT = "reposition_unit"
+  static FREEZE_SHOP_UNIT = "freeze_shop_unit"
+  static FREEZE_SHOP_ITEM = "freeze_shop_item"
 
 
   static make = {
@@ -80,6 +103,7 @@ export class NavigationRequest extends Message {
   static JOIN_ROOM = "join_room"
   static LEAVE_ROOM = "leave_room"
   static CHANGE_RULES = "change_rules"
+  static START_GAME = "start_game"
 
   static make = {
     JOIN_ROOM: (room_id)=>
@@ -88,6 +112,8 @@ export class NavigationRequest extends Message {
       new NavigationRequest(this.LEAVE_ROOM),
     CHANGE_RULES: (rules)=>
       new NavigationRequest(this.CHANGE_RULES, [rules]),
+    START_GAME: ()=>
+        new NavigationRequest(this.START_GAME),
   }
 
   constructor(request, detail=[]) {
@@ -103,6 +129,9 @@ const NavigationErrorString = {
   0: "ok",
   1: "failed to parse request",
   2: "you are not authorized to do that",
+  3: "that room does not exist",
+  4: "that room is full",
+  5: "you're already in that room",
 }
 
 export class NavigationReply extends Message {
@@ -111,6 +140,7 @@ export class NavigationReply extends Message {
   static NOT_AUTHORIZED = new NavigationReply(2)
   static ROOM_DOES_NOT_EXIST = new NavigationReply(3)
   static ROOM_IS_FULL = new NavigationReply(4)
+  static ALREADY_THERE = new NavigationReply(5)
 
   constructor(errorcode) {
     super(Message.NAVIGATION_REPLY)
@@ -129,6 +159,8 @@ export default {
   //   PLAYER_ACTION_RESPONSE,
   //   PLAYER_ACTION_REQUEST,
   // },
+  UserOnboard: UserOnboard,
+  NavigationErrorString: NavigationErrorString,
   ActionErrorString: ActionErrorString,
   ActionRequest: ActionRequest,
   ActionReply: ActionReply,

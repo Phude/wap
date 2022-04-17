@@ -1,7 +1,8 @@
 import WebSocket from 'ws';
 import Crypto from 'crypto'
-import Protocol, { Message, NavigationRequest, NavigationReply } from "protocol";
+import Protocol, { Message, NavigationRequest, NavigationReply, GameEvent } from "protocol";
 import { setInterval } from 'timers'
+import Game from './game.js'
 
 class UserConnection {
   user_uuid
@@ -19,10 +20,14 @@ class UserConnection {
 }
 
 class Room {
-  constructor() {
+  constructor(id) {
     this.users = []
     this.max_users = 6
-    this.game = {}
+    this.game = new Game(onGameEvent(id))
+  }
+
+  sendToAll(message) {
+    broadcastMessageToUsers(this.users, message)
   }
 }
 
@@ -30,6 +35,19 @@ const server = new WebSocket.Server({
     port: Protocol.PORT,
 });
 
+
+function onGameEvent(room_id) {
+  return (e)=> {
+    console.log(e.event+ " triggered on room#" + room_id)
+    getRoom(room_id).sendToAll(e)
+    // switch (e.event) {
+    //   case GameEvent.GAME_START: {
+    //     getRoom(room_id).sendToAll()
+    //     break;
+    //   }
+    // }
+  }
+}
 
 // state
 const activeUsers = {}
@@ -54,18 +72,34 @@ function onUserMessage(user_id, data) {
 function handleNavigationRequest(user_id, request, detail) {
   var user = getUser(user_id)
   switch (request) {
-    case NavigationRequest.JOIN_ROOM:
+    case NavigationRequest.JOIN_ROOM: {
       let room_id = detail[0]
       let room = getRoom(room_id)
+
+      if (getUserRoomId(user_id) === room_id) {
+        user.sendReply(NavigationReply.ALREADY_THERE);
+        return;
+      }
+      // if the room does not exist yet, create it
       if (room === undefined)
-        user.sendReply(NavigationReply.ROOM_DOES_NOT_EXIST);
-      else if (room.users.length() === room.max_users - 1)
+        createNewRoom(room_id)
+        room = getRoom(room_id)
+      console.log(room)
+      // attempt to join the room
+      if (room.users.length === room.max_users - 1)
         user.sendReply(NavigationReply.ROOM_IS_FULL);
       else {
-        moveUserToRoom(user_id, room_id);
         user.sendReply(NavigationReply.OK);
+        moveUserToRoom(user_id, room_id);
       }
       break;
+    }
+    case NavigationRequest.START_GAME: {
+      let room_id = getUserRoomId(user_id)
+      let room = getRoom(room_id)
+      let numberOfPlayers = room.users.length
+      room.game.start(numberOfPlayers)
+    }
   }
 }
 
@@ -113,7 +147,7 @@ function broadcastMessageToUsers(users, message) {
 
 // ROOMSn
 
-function getUserRoom(user_id) {
+function getUserRoomId(user_id) {
   return getUser(user_id).room_id
 }
 
@@ -122,6 +156,11 @@ function moveUserToRoom(user_id, room_id) {
   let user = getUser(user_id)
   room.users.push(user_id)
   user.room_id = room_id
+  user.sendReply(new Protocol.UserOnboard(room_id, room.users, room.game.params, room.game.phase))
+}
+
+function createNewRoom(room_id) {
+  gameRooms[room_id] = new Room(room_id)
 }
 
 // =============
