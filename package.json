@@ -1,0 +1,19 @@
+{
+  "name": "wap",
+  "version": "1.0.0",
+  "description": "web auto pets",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Phude/wap.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Phude/wap/issues"
+  },
+  "homepage": "https://github.com/Phude/wap#readme"
+}

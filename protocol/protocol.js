@@ -148,7 +148,7 @@ export class NavigationReply extends Message {
   }
 }
 
-class ServerMessage extends Message {
+class Notification extends Message {
   TODO
 }
 

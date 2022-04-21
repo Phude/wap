@@ -1,3 +1,4 @@
+import * as http from 'http';
 import WebSocket from 'ws';
 import Crypto from 'crypto'
 import Protocol, { Message, NavigationRequest, NavigationReply, GameEvent } from "protocol";
@@ -164,6 +165,14 @@ function createNewRoom(room_id) {
 }
 
 // =============
+
+
+// HTTP Server
+
+const serv = http.createServer((req, res) => {
+  console.log(req.headers);
+  res.end()
+}).listen(1337);
 
 let i = 0;
 setInterval(()=> {

@@ -5,7 +5,7 @@ import Protocol, { NavigationRequest, ActionRequest, Message, GameEvent } from "
 var state = {
   latest_error: "",
   room: undefined,
-  ents: undefined,
+  ents: {},
 }
 
 function onservermessage(msg) {
@@ -17,11 +17,12 @@ function onservermessage(msg) {
       switchToGameView()
     }
     else if (msg.event === GameEvent.ENT_UPDATE) {
-      
+
     }
   }
   else if (msg.message_type == Message.NAVIGATION_REPLY) {
     state.latest_error = Protocol.NavigationErrorString[msg.errorcode];
+    console.log(state.latest_error);
     if (state.latest_error === undefined) {
       state.latest_error = "unknown error";
     }
@@ -35,14 +36,16 @@ function onservermessage(msg) {
   m.redraw()
 }
 
-ServerConnection.init(onservermessage)
-
 function switchToLobbyView() {
   m.mount(document.body, Lobby)
 }
 
 function switchToGameView() {
   m.mount(document.body, Game)
+}
+
+function establishGameConnection() {
+  ServerConnection.init(onservermessage)
 }
 
 function joinRoom() {
@@ -54,14 +57,15 @@ function startGame() {
   ServerConnection.send(NavigationRequest.make.START_GAME())
 }
 
+
 var MainMenu = {
   view: function() {
     return m("main", [
       m("h1", {class: "title"}, "Web AutoPets"),
-      m("form", {action: "#"}, [
+      m("form", {action: "", method: "POST"}, [
         m("label", state.latest_error),
-        m("input", {id: "roomCode", type: "text", placeholder: "Enter game ID"}),
-        m("button", {onclick: joinRoom}, "Join Game"),
+        m("input", {id: "roomCode", type: "text", autofocus: true, autocomplete: "off", placeholder: "Enter game ID"}),
+        m("button", {onclick: joinRoom, type: "submit"}, "Join Game"),
       ])
     ])
   }

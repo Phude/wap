@@ -44,7 +44,7 @@ export default class Game {
   }
 
   addEntity(entity, type) {
-    var id = this.randomId()
+    var id = this.randomId() // TODO: should be independent of RNG used by gameplay
     entity.type = type
     this.es.ents[id] = entity
     return id
@@ -66,6 +66,10 @@ export default class Game {
       round_timer: Entity.NULL_ID,
     }
     return this.addEntity(root, "root")
+  }
+
+  makeParam(param) {
+    return this.addEntity(param, "param")
   }
 
   makeTimer(duration) {
